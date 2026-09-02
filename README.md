@@ -1,4 +1,4 @@
-# testgen
+# safemigrate
 
 Migration-aware characterization test generator for legacy JS codebases.
 
@@ -26,6 +26,6 @@ Everything else throws with a TODO naming its milestone.
 ## Usage (once M2 lands)
 
 ```bash
-cp testgen.config.example.js testgen.config.js
-npx testgen --only src/components/Article.js --dry-run
+cp safemigrate.config.example.js safemigrate.config.js
+npx safemigrate --only src/components/Article.js --dry-run
 ```

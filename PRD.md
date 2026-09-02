@@ -1,4 +1,4 @@
-# testgen — Migration-Aware Characterization Test Generator
+# safemigrate — Migration-Aware Characterization Test Generator
 
 **Status:** design
 **Owner:** Dominic Serrano
@@ -203,7 +203,7 @@ least once.
 
 ### M2 — Generate + green gate (2 weeks)
 Steps 3–5, hardcoded target list. Bounded retry with error feedback.
-**Done when:** `testgen run` produces N passing tests unattended.
+**Done when:** `safemigrate run` produces N passing tests unattended.
 
 ### M3 — Mutation gate (2 weeks) ← the important one
 Step 6. Stryker integration, per-module scoping, threshold config.
@@ -233,7 +233,7 @@ into the threshold. This replaces the placeholder 0.6 threshold.
 Steps 1, 2, 8. Migration-aware target ranking. Run report as markdown artifact. Frontend
 port: this is where the harness built against the API package (M1–M3) gets pointed at
 the untested React frontend, exercising the config-shaped differences called out in M1.
-**Done when:** `testgen run --upgrade react@18` picks its own targets.
+**Done when:** `safemigrate run --upgrade react@18` picks its own targets.
 
 ### M5 — Package (1–2 weeks)
 npm CLI + composite GitHub Action wrapping the same core. Config schema.

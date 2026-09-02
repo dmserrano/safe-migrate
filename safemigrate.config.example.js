@@ -1,4 +1,4 @@
-/** @type {import('./src/config.js').TestgenConfig} */
+/** @type {import('./src/config.js').SafeMigrateConfig} */
 export default {
   // Repo under test. Paths are relative to this root.
   target: {
@@ -34,7 +34,7 @@ export default {
   },
 
   output: {
-    reportDir: ".testgen/reports",
-    rejectionLog: ".testgen/rejected",   // publish this — it is the credibility artifact
+    reportDir: ".safemigrate/reports",
+    rejectionLog: ".safemigrate/rejected",   // publish this — it is the credibility artifact
   },
 };

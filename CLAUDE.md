@@ -95,8 +95,6 @@ Coverage percentage is not a quality signal here — mutation score is.
   scores on the API package's existing tests — see PRD § M3)
 - Whether backend/API test generation is a v1 product surface or stays a harness proving
   ground only, with frontend as the actual target (see PRD § Open questions)
-- **Project name.** "testgen" undersells it once `migrate` exists. Rename before the
-  first published Action references it.
 
 ## Things to do by hand, not with an agent
 

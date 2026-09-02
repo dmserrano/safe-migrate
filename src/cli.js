@@ -3,9 +3,9 @@ import { program } from "commander";
 import { run } from "./pipeline/index.js";
 
 program
-  .name("testgen")
+  .name("safemigrate")
   .description("Migration-aware characterization test generator")
-  .option("-c, --config <path>", "config file", "./testgen.config.js")
+  .option("-c, --config <path>", "config file", "./safemigrate.config.js")
   .option("--only <path>", "single module (use until selection lands at M4)")
   .option("--dry-run", "generate and gate, but do not write or commit")
   .action(async (opts) => {

@@ -1,9 +1,9 @@
 {
-  "name": "testgen",
+  "name": "safemigrate",
   "version": "0.0.1",
   "description": "Migration-aware characterization test generator for legacy JS codebases",
   "type": "module",
-  "bin": { "testgen": "./src/cli.js" },
+  "bin": { "safemigrate": "./src/cli.js" },
   "scripts": {
     "start": "node src/cli.js",
     "test": "node --test"
