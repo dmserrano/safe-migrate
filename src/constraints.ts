@@ -9,8 +9,15 @@
  * NOTE: regex is a placeholder. Replace with an AST pass (@babel/parser + traverse)
  * before M3 — regex will produce false positives on strings and comments.
  */
+import type { Context } from "./types.js";
 
-export const CONSTRAINTS = [
+export interface Constraint {
+  id: string;
+  reason: string;
+  test: (src: string, ctx?: Partial<Context>) => boolean;
+}
+
+export const CONSTRAINTS: Constraint[] = [
   {
     id: "no-enzyme",
     reason: "Enzyme has no React 18 support; breaks during the migration by construction.",
@@ -29,9 +36,9 @@ export const CONSTRAINTS = [
   {
     id: "no-self-mock",
     reason: "Mocking the module under test means the test exercises the mock.",
-    test: (src, { modulePath } = {}) =>
-      modulePath
-        ? new RegExp(`jest\\.mock\\(['"].*${escape(modulePath)}`).test(src)
+    test: (src, ctx) =>
+      ctx?.modulePath
+        ? new RegExp(`jest\\.mock\\(['"].*${escape(ctx.modulePath)}`).test(src)
         : false,
   },
   {
@@ -41,12 +48,14 @@ export const CONSTRAINTS = [
   },
 ];
 
-function escape(s) {
+function escape(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** @returns {{ok: boolean, violations: Array<{id: string, reason: string}>}} */
-export function checkConstraints(src, ctx = {}) {
+export function checkConstraints(
+  src: string,
+  ctx: Partial<Context> = {},
+): { ok: boolean; violations: Array<{ id: string; reason: string }> } {
   const violations = CONSTRAINTS
     .filter((c) => c.test(src, ctx))
     .map(({ id, reason }) => ({ id, reason }));

@@ -12,10 +12,14 @@ import { gateGreen } from "./gates/green.js";
 import { gateMutation } from "./gates/mutation.js";
 import { gateStable } from "./gates/stable.js";
 import { writeReport } from "./report.js";
+import type { Attempt, Gate, GateFailure, SafeMigrateConfig, TargetResult } from "../types.js";
 
-export async function run(config, { only } = {}) {
+export async function run(
+  config: SafeMigrateConfig,
+  { only }: { only?: string } = {},
+): Promise<TargetResult[]> {
   const targets = only ? [only] : await selectTargets(config);
-  const results = [];
+  const results: TargetResult[] = [];
 
   for (const target of targets) {
     results.push(await processTarget(target, config));
@@ -25,16 +29,16 @@ export async function run(config, { only } = {}) {
   return results;
 }
 
-async function processTarget(target, config) {
+async function processTarget(target: string, config: SafeMigrateConfig): Promise<TargetResult> {
   const ctx = await assembleContext(target, config);
-  const attempts = [];
+  const attempts: Attempt[] = [];
 
   for (let i = 0; i < config.gates.maxGenerationAttempts; i++) {
     const { source, tokens } = await generateTest(ctx, config, attempts);
 
     // Cheap gates first — static check costs nothing, mutation costs minutes.
-    const gates = [gateStatic, gateGreen, gateStable, gateMutation];
-    let failure = null;
+    const gates: Gate[] = [gateStatic, gateGreen, gateStable, gateMutation];
+    let failure: GateFailure | null = null;
 
     for (const gate of gates) {
       const result = await gate(source, ctx, config);
@@ -49,5 +53,6 @@ async function processTarget(target, config) {
   }
 
   // Exhausted retries. This is a legitimate outcome, not an error — log it loudly.
-  return { target, status: "rejected", attempts, reason: attempts.at(-1).failure };
+  const last = attempts.at(-1)!;
+  return { target, status: "rejected", attempts, reason: last.failure! };
 }

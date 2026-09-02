@@ -5,8 +5,13 @@
  * deterministic harness and into the prompt, which is the wrong direction.
  */
 import { CONSTRAINTS } from "../constraints.js";
+import type { Attempt, Context, SafeMigrateConfig } from "../types.js";
 
-export async function generateTest(ctx, config, priorAttempts = []) {
+export async function generateTest(
+  ctx: Context,
+  config: SafeMigrateConfig,
+  priorAttempts: Attempt[] = [],
+): Promise<{ source: string; tokens?: number }> {
   const prompt = buildPrompt(ctx, priorAttempts);
 
   // TODO(M1): shell out to config.agent.provider's CLI (copilot-cli, claude-cli, ...).
@@ -17,7 +22,7 @@ export async function generateTest(ctx, config, priorAttempts = []) {
   throw new Error("generateTest not implemented — M1");
 }
 
-function buildPrompt(ctx, priorAttempts) {
+function buildPrompt(ctx: Context, priorAttempts: Attempt[]): string {
   const rules = CONSTRAINTS.map((c) => `- ${c.id}: ${c.reason}`).join("\n");
 
   const feedback = priorAttempts.length

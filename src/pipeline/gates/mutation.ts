@@ -10,7 +10,9 @@
  *
  * M3. This is the milestone that makes the project worth showing.
  */
-export async function gateMutation(source, ctx, config) {
+import type { Gate } from "../../types.js";
+
+export const gateMutation: Gate = async (source, ctx, config) => {
   // TODO(M3):
   //   - stryker run --mutate <ctx.modulePath> --testRunner jest
   //   - parse mutation score
@@ -18,4 +20,4 @@ export async function gateMutation(source, ctx, config) {
   //   - on reject, record WHICH mutants survived — that detail is the interesting part
   //     of the write-up and the thing that proves the gate is real
   throw new Error("gateMutation not implemented — M3");
-}
+};

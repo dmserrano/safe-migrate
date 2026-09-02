@@ -82,7 +82,10 @@ Coverage percentage is not a quality signal here — mutation score is.
 
 ## Conventions
 
-- Node 20+, ESM, plain JS (matching the target repo; no TS build step)
+- Node 20+, ESM, TypeScript (`src/**/*.ts` → `tsc` → `dist/`; `npm run build` before
+  running the CLI, or `npm start`). This is the harness's OWN toolchain choice — it does
+  not imply anything about a target repo, which stays whatever plain JS/legacy stack it
+  already is. Generated tests still target the module's real runtime, not this repo's.
 - Single package, clean module boundaries. **Not a monorepo** — workspace tooling is
   overhead that buys nothing at this size.
 - Two commands over shared internals once M6 lands:

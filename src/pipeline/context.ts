@@ -4,7 +4,12 @@
  * Quality of generated tests depends more on this than on prompt wording.
  * Under-supplying context is the most likely cause of bad output at M1/M2.
  */
-export async function assembleContext(modulePath, config) {
+import type { Context, SafeMigrateConfig } from "../types.js";
+
+export async function assembleContext(
+  modulePath: string,
+  config: SafeMigrateConfig,
+): Promise<Context> {
   // TODO(M2):
   //   - module source
   //   - direct imports (signatures, not full bodies — watch the context budget)

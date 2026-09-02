@@ -356,3 +356,25 @@ revisit later: weighting mutants near the migration's actual API surface more he
 or a separate "exercises the changing surface" check alongside (not instead of) mutation
 score. Keep mutation score as the M3 floor either way — this is about whether it's
 *sufficient*, not whether it's *wrong*.
+
+### Backlog: npm package distribution (post-M5)
+
+The tool should be installable (`npm install -g safemigrate` / `npx safemigrate`), not
+just run from a checked-out clone. Gaps beyond what already exists (`bin` entry,
+`type: module`, `engines`):
+
+- A `files`/`exports` allowlist in `package.json` — nothing currently scopes what a
+  publish would ship.
+- Config discovery. Today `-c/--config` is a single hardcoded relative flag
+  (`./safemigrate.config.js`). An installed CLI wants `cosmiconfig`-style walk-up
+  discovery (`safemigrate.config.js`, or a `package.json#safemigrate` key), matching the
+  eslint/prettier convention this tool is implicitly promising by shape.
+- A repo-relative-assumption audit — anything that currently assumes it's running from
+  inside a sibling checkout of safe-migrate rather than `node_modules/.bin` in an
+  arbitrary target repo. This is the same audit already scoped in the M4
+  pipeline-generalization ticket; distribution just makes it non-optional.
+- Versioning/publish process (semver discipline, publish access) — process, not code.
+
+Not blocking M0-M5. Revisit once the harness has proven itself against Winds and the
+question shifts from "does this work" to "can someone else install this against their
+own repo."
