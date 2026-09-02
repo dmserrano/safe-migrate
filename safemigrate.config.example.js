@@ -32,7 +32,7 @@ export default {
     // out to with a prompt and get text back. "copilot-cli" | "claude-cli" |
     // "claude-sdk" | "copilot-sdk". Pick whatever you have a license/API key for;
     // none of the gates care which one produced the test.
-    provider: "claude-cli",
+    provider: "copilot-cli",
     maxTokensPerModule: 20000,
   },
 

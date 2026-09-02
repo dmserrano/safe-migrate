@@ -337,3 +337,22 @@ M5): inferring wrong values is worse than an honest manual step, since a bad `ru
 guess silently corrupts the green gate rather than failing loudly. Revisit once the
 schema is locked and there's a corpus of real configs (Winds + at least one substitute
 repo from M6) to validate detection heuristics against.
+
+### Backlog: mutation score is a floor, not proof of migration-safety (M3+)
+
+Mutation score answers "if a line of this module changes, does the test notice?" — a
+proxy for whether a test does anything real. It does not answer the question this tool
+actually exists to answer: will the test catch a regression from *the specific
+dependency upgrade in play* (a React 18 rendering/timing change, a Mongo driver behavior
+change)? A test can score well on arbitrary code mutations while never exercising the
+API surface the migration will actually touch. The M1 calibration surfaced this
+concretely: a generated characterization test for `isURL` can be solid by mutation-score
+standards while having nothing to do with, say, a `normalize-url` major-version bump's
+actual behavior changes.
+
+Not solving this now — it needs real data from M3's mutation gate in production first
+to know whether it's a real gap in practice or a theoretical one. Possible directions to
+revisit later: weighting mutants near the migration's actual API surface more heavily,
+or a separate "exercises the changing surface" check alongside (not instead of) mutation
+score. Keep mutation score as the M3 floor either way — this is about whether it's
+*sufficient*, not whether it's *wrong*.
