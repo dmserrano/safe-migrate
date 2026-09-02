@@ -9,8 +9,10 @@ import { CONSTRAINTS } from "../constraints.js";
 export async function generateTest(ctx, config, priorAttempts = []) {
   const prompt = buildPrompt(ctx, priorAttempts);
 
-  // TODO(M1): shell out to Copilot CLI. Do this by hand first before automating —
-  // you need to see how it fails before you can design around it.
+  // TODO(M1): shell out to config.agent.provider's CLI (copilot-cli, claude-cli, ...).
+  // Do this by hand first before automating — you need to see how it fails before
+  // you can design around it. Provider-agnostic: the harness only needs a prompt in,
+  // text out; no gate cares which agent produced the test.
   // TODO(M2): capture token usage; cost-per-ACCEPTED-test is the honest metric.
   throw new Error("generateTest not implemented — M1");
 }

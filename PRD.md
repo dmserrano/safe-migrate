@@ -109,7 +109,7 @@ Violations are detected statically (AST/lint pass) and rejected before the test 
   │     fixtures, framework versions in play                   │
   ├────────────────────────────────────────────────────────────┤
   │  3. GENERATE    ← the only agent step                      │
-  │     Copilot CLI, constrained by rules above                │
+  │     Provider-agnostic CLI/SDK, constrained by rules above  │
   ├────────────────────────────────────────────────────────────┤
   │  4. GATE: static      constraint rules pass?               │
   │  5. GATE: green       test passes against current code?    │
@@ -180,8 +180,9 @@ quarantine list (if any) is committed, and one frontend component renders under 
 manually to confirm the harness *could* target it later.
 
 ### M1 — One test, by hand-driven agent (1–2 weeks)
-No pipeline. No config. Manually invoke Copilot CLI on one API module with the constraint
-rules in the prompt. Get one behavior-level test that passes.
+No pipeline. No config. Manually invoke an agent CLI (Copilot, Claude Code, whatever
+you have a license for — provider-agnostic by design, see Open Questions) on one API
+module with the constraint rules in the prompt. Get one behavior-level test that passes.
 
 Build order is **API-first**: the harness (M1–M3) is built and debugged against the API
 package, where a passing baseline and human-written tests already exist. The frontend is
@@ -298,8 +299,13 @@ are worthless if generation and verification don't hold up.
 
 ## Open questions
 
-- Copilot CLI vs. Copilot SDK for the generation step — CLI is faster to start, SDK may
-  give better control over context. Decide at M2.
+- Agent provider for the generation step is deliberately not pinned to one vendor.
+  `config.agent.provider` selects it (`copilot-cli`, `claude-cli`, `claude-sdk`,
+  `copilot-sdk`, ...); `generate.js` only needs a prompt in, text out, so no gate cares
+  which one produced the test. CLI vs SDK is still an open sub-question per provider
+  (CLI is faster to start, SDK may give better control over context) — decide at M2,
+  and expect the M1 provider (whatever license is on hand) and the M2/production
+  provider to legitimately differ.
 - Whether to attempt backend (Express route) tests beyond the M1–M3 calibration use, or
   stay frontend-only as the v1 product surface. Current lean: frontend is the product
   (no existing coverage, more compelling migration story), API is the harness's proving
@@ -317,3 +323,17 @@ alerting — Dependabot and GitHub Advisory already do that job — the contribu
 narrower: linking a CVE to the specific modules that need coverage before the fix can
 safely ship. Not before M4; selection logic doesn't matter until generation and
 verification (M1–M3) already hold up.
+
+### Backlog: config-populating `init` step (post-M5)
+
+`safemigrate.config.js` is hand-authored through M5 — `target`, `runtime`, and
+`migration` are written by a human pointing the tool at a repo. A stretch goal: an `init`
+(or a `generate`-time pre-pass) that inspects the target repo and proposes values instead
+— detected pinned Node/container version, an existing test command, dependency versions
+eligible for a major bump — leaving the human to confirm rather than transcribe.
+
+Deliberately out of scope before the config schema itself has stabilized (ticket 17,
+M5): inferring wrong values is worse than an honest manual step, since a bad `runtime`
+guess silently corrupts the green gate rather than failing loudly. Revisit once the
+schema is locked and there's a corpus of real configs (Winds + at least one substitute
+repo from M6) to validate detection heuristics against.

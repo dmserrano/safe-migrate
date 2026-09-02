@@ -90,7 +90,9 @@ Coverage percentage is not a quality signal here — mutation score is.
 
 ## Open decisions — ask, don't assume
 
-- Copilot CLI vs. Copilot SDK for generation (decide at M2)
+- Agent provider is not pinned to one vendor — `config.agent.provider` selects it
+  (Copilot CLI/SDK, Claude CLI/SDK, ...). CLI vs SDK per-provider still decided at M2;
+  see PRD § Open questions.
 - Mutation score threshold (0.6 is a placeholder; M3 sets it from the p25 of covered-mutant
   scores on the API package's existing tests — see PRD § M3)
 - Whether backend/API test generation is a v1 product surface or stays a harness proving
@@ -98,7 +100,8 @@ Coverage percentage is not a quality signal here — mutation score is.
 
 ## Things to do by hand, not with an agent
 
-M0 and M1. Getting `npm install` and the existing API suite running, and invoking
-Copilot CLI manually on one API module, is how the failure modes get learned, and
-knowing which generated tests to reject is the entire value of this tool. Automate
+M0 and M1. Getting `npm install` and the existing API suite running, and invoking an
+agent CLI manually on one API module (any provider — see Open decisions), is how the
+failure modes get learned, and knowing which generated tests to reject is the entire
+value of this tool. Automate
 from M2.

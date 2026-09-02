@@ -28,8 +28,11 @@ export default {
   },
 
   agent: {
-    // "copilot-cli" | "copilot-sdk"  — decide at M2
-    provider: "copilot-cli",
+    // Provider-agnostic by design — the harness only needs something it can shell
+    // out to with a prompt and get text back. "copilot-cli" | "claude-cli" |
+    // "claude-sdk" | "copilot-sdk". Pick whatever you have a license/API key for;
+    // none of the gates care which one produced the test.
+    provider: "claude-cli",
     maxTokensPerModule: 20000,
   },
 
