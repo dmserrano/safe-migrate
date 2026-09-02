@@ -5,6 +5,16 @@
 **Target repo for validation:** `GetStream/Winds` (React + Express + MongoDB, last pushed Oct 2021).
 API package has an existing test suite; frontend (React) has none.
 
+**End goal vs. v1 validation target.** The tool is not "a React 18 migrator for Winds."
+The end goal is a repo-agnostic tool for any legacy JS codebase facing any breaking
+package upgrade (framework major version, Node runtime, anything Dependabot leaves red).
+Winds is the *validation target through M0–M3* — the harness is built and debugged there
+because it already has a usable oracle (its API test suite). The config schema
+(`safemigrate.config.js`) is deliberately shaped to generalize from day one — `target`,
+`runtime`, and `migration` are already parameters, not hardcoded — so M4/M5 is a
+verification pass on that claim (does anything Winds-specific leak into
+`src/pipeline/**`?), not a rewrite. See M4 and M6 below for how this affects done-when.
+
 ---
 
 ## Problem
@@ -233,10 +243,22 @@ into the threshold. This replaces the placeholder 0.6 threshold.
 Steps 1, 2, 8. Migration-aware target ranking. Run report as markdown artifact. Frontend
 port: this is where the harness built against the API package (M1–M3) gets pointed at
 the untested React frontend, exercising the config-shaped differences called out in M1.
-**Done when:** `safemigrate run --upgrade react@18` picks its own targets.
+
+This is also the checkpoint for the end-goal claim in the header: before or alongside the
+frontend port, audit `src/pipeline/**` for anything that only works because it's Winds —
+a hardcoded path, an assumption about `app`/`api` package layout, a Winds-specific
+fixture. Everything repo-specific should already live in `safemigrate.config.js` or in
+prompt exemplars, not in pipeline code. If it doesn't, that's a bug to fix at M4, not a
+reason to defer generalization to a later phase — the config schema was written to make
+this a verification pass, not a rewrite.
+
+**Done when:** `safemigrate run --upgrade react@18` picks its own targets, and the
+pipeline-code audit above turns up nothing that only works for Winds.
 
 ### M5 — Package (1–2 weeks)
-npm CLI + composite GitHub Action wrapping the same core. Config schema.
+npm CLI + composite GitHub Action wrapping the same core. Config schema. "Live" here means
+CI/Action-triggerable against the target repo's current default branch — no additional
+re-baselining logic beyond what M0's delta-based gating already provides.
 **Done when:** it runs as a GitHub Agentic Workflow on a schedule and opens PRs.
 
 ### M6 — Validate against a real migration (1–2 weeks)
@@ -247,6 +269,13 @@ error with no runtime test coverage), so it runs alongside the generated suite a
 condition of a clean migration, not as an accept/reject gate on individual tests.
 Whatever happens is the write-up: clean pass proves the net held; a miss is a finding
 about coverage gaps and is arguably more interesting.
+
+Winds is the intended target, but not a hard requirement — as of this writing it hasn't
+been confirmed to boot end-to-end. If Winds can't reach a live-runnable state by M6, run
+this milestone against a substitute repo instead (any legacy JS repo with a real breaking
+upgrade pending); the substitution is itself acceptable evidence that the tool
+generalizes, precisely because M4 was the milestone that made that possible. Don't block
+M6 on fixing Winds specifically.
 
 **Do not build M4–M5 before M3 works.** Selection and packaging are the easy parts and
 are worthless if generation and verification don't hold up.
