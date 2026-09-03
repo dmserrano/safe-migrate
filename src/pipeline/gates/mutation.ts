@@ -76,8 +76,9 @@ export async function scoreMutation(
     });
     const mutants = (await stryker.runMutationTest()) as MutantResult[];
 
-    // Covered mutants only — uncovered says nothing about test quality (PRD
-    // threshold-calibration method: p25 of covered-mutant scores).
+    // NoCoverage never actually fires — the command runner has no per-mutant coverage
+    // analysis, so this only drops Ignored mutants in practice. Kept for intent/in
+    // case a future runner does support it.
     const covered = mutants.filter((m) => m.status !== Status.Ignored && m.status !== Status.NoCoverage);
     const killed = covered.filter((m) => KILLED_STATUSES.has(m.status));
     const survived = mutants.filter((m) => SURVIVING_STATUSES.has(m.status));

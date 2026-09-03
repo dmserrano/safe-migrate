@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 /**
  * PRD § M3 calibration: derive gates.mutationScoreThreshold from the target repo's own
- * human-written tests instead of guessing. Rejecting generated tests against a bar the
- * existing suite itself would fail is indefensible.
+ * tests. Rejecting generated tests against a bar the existing suite would itself fail
+ * is indefensible.
  *
- * Method: for each given module with an existing test (discovered via
- * assembleContext's own-test matching), score that REAL test through the same mutation
- * gate mechanics generated tests go through. Modules with <10 covered mutants are
- * dropped (too little signal). Threshold = p25 of the remaining scores.
+ * For each given module with an existing test (assembleContext's own-test matching),
+ * scores that REAL test through the same mutation mechanics generated tests go
+ * through. Modules under 10 covered mutants are dropped (too little signal).
+ * Threshold = p25 of what's left.
  *
- * One-time-per-repo tool, not part of the generate/gate pipeline — run by hand, not
- * invoked by `safe-migrate run`. Not agent-writable at run time for the same reason
+ * Run by hand, not by `safe-migrate run`. Not agent-writable at run time, same reason
  * gates aren't: it measures the bar, it doesn't get to move it to pass.
  *
  * Usage: node dist/scripts/calibrate-mutation-threshold.js -c <config> <modulePath...>
