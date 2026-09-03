@@ -12,6 +12,7 @@
     "calibrate": "npm run build && node dist/scripts/calibrate-mutation-threshold.js",
     "test": "npm run build && node --test 'dist/**/*.test.js'",
     "test:integration": "npm run build && node --test --test-concurrency=1 'dist/**/*.itest.js'",
+    "mutation:self": "stryker run",
     "prepublishOnly": "npm run build"
   },
   "engines": {
