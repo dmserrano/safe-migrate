@@ -150,21 +150,37 @@ breaks during the migration it was supposed to protect.
 
 ## Status
 
-Pre-alpha. Loose checklist of the pipeline above, in build order — see [`PRD.md`](./PRD.md)
+Pre-alpha. Checklist of the pipeline above, in build order — see [`PRD.md`](./PRD.md)
 for the full milestone breakdown and reasoning.
 
-- [x] **SELECT** — hardcoded via `--only <path>`; auto-selection from the dep graph is M4
-- [x] **CONTEXT** — real assembly for a single `--only` target; full retrieval for
-      auto-selected targets is M4
-- [x] **GENERATE** — real agent call, provider-agnostic
-- [x] **static gate** — real AST pass
-- [ ] **green gate** — stubbed, throws
-- [ ] **mutation gate** — stubbed, throws (M3 — the milestone that makes this worth showing)
-- [ ] **stability gate** — no-op placeholder, always passes
-- [ ] **REPORT** — computes metrics in memory; writing the report + rejection log to disk is M4
+1. **SELECT** _Pick what to test_ (planned)
+   - Resolves migration.upgrades to affected modules via import-graph walk; ranked by churn × complexity; hardcoded via --only until then.
+   - _Figures out which code the upgrade will actually touch, so effort isn't spent testing what's safe already._
+2. **CONTEXT**  _Brief the AI_ (live)
+   - Assembles module source, import signatures, and a sibling test as a conventions exemplar; the module's own test is physically excluded from context.
+   - _Gives the AI everything it needs to write a good test — without letting it just copy the answer that already exists._
+3. **GENERATE** _Draft a test_ (live)
+   - Single agent call (claude-cli/copilot-cli) returns test source + token usage; bounded to 3 attempts per module.
+   - _The only step where AI writes anything. It drafts; it doesn't decide if the draft is good enough._
+4. **static gate** _Follows the rulebook?_ (live — gate)
+   - AST pass checks for Enzyme, snapshots, internals assertions, self-mocking, empty waitFor; rejects before the test ever runs.
+   - _Screens out tests that would break for reasons that have nothing to do with the actual code._
+5. **green gate** _Runs cleanly?_ (live — gate)
+   - Test executes inside config.runtime.image, scoped to just the new file, with config.runtime.services sharing its network namespace.
+   - _Proves the test actually passes against real, working code, in a real copy of its environment._
+6. **mutation gate**  _Repeats reliably?_ (planned)
+   - No-op stub; will re-run the green gate stabilityRuns (3) times and require identical results.
+   - _Makes sure the test isn't randomly flaky — a coin-flip test is worse than no test._
+7. **stability gate** _Catches real bugs?_ (planned)
+   - Will run Stryker mutation testing scoped to the module, compare against mutationScoreThreshold.
+   - _Deliberately breaks the code a little to confirm the test would actually notice — the real proof it's protecting anything._
+8. **REPORT** _Accept / Reject_ (planned)
+   - All gates pass → accepted into the test set. Any gate fails 3x → rejected, reason logged to the rejection artifact.
+   - _A rejection with a clear reason is treated as a success, not a failure — proof the checks aren't rubber-stamping._
 
 ## Roadmap
 
+- [ ] Finish workflow pipeline
 - [ ] Publish to npm once M5 packaging lands
 - [ ] GitHub Action for CI-triggered migrations
 - [ ] Provider-agnostic generation (`claude-cli`, `copilot-cli`, SDKs — see PRD § Open questions)
