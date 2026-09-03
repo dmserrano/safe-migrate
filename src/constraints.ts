@@ -1,22 +1,13 @@
 /**
- * Constraint rules enforced on generated tests.
- *
- * These exist because a test coupled to framework internals breaks during the migration
- * it was supposed to protect — worse than having no test at all.
- *
- * Checked statically BEFORE the test is ever run (cheap gate first). AST-based (not
- * regex) so a constraint keyword inside a string literal or comment doesn't
- * false-positive — e.g. a test asserting on the LITERAL STRING "toMatchSnapshot" should
- * not be rejected for using snapshots.
+ * Constraint rules for generated tests. AST-based, not regex — a constraint keyword
+ * inside a string/comment shouldn't false-positive. Checked before the test ever runs.
  */
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import type { Context } from "./types.js";
 
-// Single source of truth for constraint ids — avoids typo-prone string duplication
-// between CONSTRAINTS and the violated.add(...) calls below (a misspelled literal
-// there would silently never match, TS can't catch a plain string typo).
+// avoid typo-prone duplicate id strings
 export const ConstraintId = {
   NoEnzyme: "no-enzyme",
   NoSnapshots: "no-snapshots",
@@ -55,8 +46,7 @@ export const CONSTRAINTS: ConstraintDef[] = [
   },
 ];
 
-/** jest.mock() args are import specifiers, not full repo-relative paths — compare by
- * basename (no extension), not exact-path equality against ctx.modulePath. */
+/** jest.mock() args are specifiers, not full paths — compare by basename. */
 function moduleStem(modulePath: string): string {
   const base = modulePath.split("/").pop() ?? modulePath;
   return base.replace(/\.[jt]sx?$/, "");
