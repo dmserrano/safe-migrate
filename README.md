@@ -8,7 +8,7 @@
 [![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](#status)
 
-[Why](#why) · [How it works](#how-it-works) · [Quickstart](#quickstart) · [Constraints](#constraints-on-generated-tests) · [Status](#status) · [Roadmap](#roadmap)
+[Why](#why) · [Runtime separation](#runtime-separation) · [How it works](#how-it-works) · [Quickstart](#quickstart) · [Constraints](#constraints-on-generated-tests) · [Status](#status) · [Roadmap](#roadmap)
 
 </div>
 
@@ -17,21 +17,21 @@
 JS apps fall behind on dependencies fast. Dependabot will tell you a package is a couple
 major versions behind — it won't tell you whether upgrading is safe. Without tests that actually
 exercise current behavior, "is this safe to merge" becomes a manual audit every time, so
-the PR sits red and the debt compounds.
+the PR grows stale and the debt compounds.
 
-**safemigrate** generates that safety net on demand: characterization tests for the
+**safe-migrate** generates that safety net on demand: characterization tests for the
 modules a specific upgrade will touch, verified against real defects before they're kept.
 
 ## Why
 
-Asking an LLM to "write tests for this file" is easy and nearly worthless — it produces
-plausible tests that pass and catch nothing. Two failure modes dominate:
+Asking an LLM to "write tests for this file" is easy, and the output usually passes CI
+without catching anything real. Two patterns show up constantly:
 
 - **Tests that assert nothing meaningful.** High coverage, zero defect detection.
 - **Tests coupled to framework internals.** They break during the exact migration they
-  were supposed to protect — worse than no test at all.
+  were supposed to protect
 
-safemigrate treats generation as the *cheap, disposable* step and verification as the
+safe-migrate treats generation as the *cheap, disposable* step and verification as the
 product:
 
 > **The agent is not the product. The verification harness is.**
@@ -58,14 +58,14 @@ flowchart LR
 - **static** — AST pass rejects Enzyme, snapshots, internals-poking, self-mocking
 - **green** — does it pass against the code as it exists today?
 - **mutation** — does it actually *catch* injected bugs, via [Stryker](https://stryker-mutator.io)?
-  This is the gate that separates safemigrate from "LLM writes some tests."
+  This is the gate that separates safe-migrate from "LLM writes some tests."
 - **stability** — does it pass 3 consecutive identical runs, or is it flaky?
 
 A rejected test with a logged reason is a **successful outcome**, not an error path — the
 rejection log is the most credible artifact this tool produces. Most demos in this space
 show only successes; that reads as marketing.
 
-### Runtime separation
+## Runtime separation
 
 The orchestrator and the code under test never share a Node version. The orchestrator
 runs modern Node; the target repo runs in its own pinned container, because upgrading
@@ -93,20 +93,20 @@ flowchart TB
 ## How it works
 
 ```
-$ safemigrate --only src/components/Article.js --dry-run
+$ safe-migrate --only src/components/Article.js --dry-run
 
 ┌─────────────────────────┬───────────┬────────────────┬──────────┐
 │ target                  │ status    │ mutation score │ retries  │
 ├─────────────────────────┼───────────┼────────────────┼──────────┤
-│ src/components/Article  │ accepted  │ 0.81           │ 0       │
-│ src/components/Feed     │ rejected  │ 0.42 (< 0.60)  │ 3       │
+│ src/components/Article  │ accepted  │ 0.81           │ 0        │
+│ src/components/Feed     │ rejected  │ 0.42 (< 0.60)  │ 3        │
 └─────────────────────────┴───────────┴────────────────┴──────────┘
 ```
 
 Generated tests are **characterization tests** — a term from Michael Feathers' *Working
 Effectively with Legacy Code*, meaning a test that pins down what the code *currently*
 does, bugs included, rather than asserting what it *should* do. The assertion is "this
-did not change," not "this is correct." safemigrate does not fix bugs it finds; it
+did not change," not "this is correct." safe-migrate does not fix bugs it finds; it
 captures them so the migration doesn't silently change behavior nobody signed off on.
 
 ## Quickstart
@@ -115,12 +115,12 @@ captures them so the migration doesn't silently change behavior nobody signed of
 > This section describes the target UX, not what runs today.
 
 ```bash
-npm install -g safemigrate   # not published yet
-cp node_modules/safemigrate/safemigrate.config.example.js safemigrate.config.js
+npm install -g safe-migrate   # not published yet
+cp node_modules/safe-migrate/safe-migrate.config.example.js safe-migrate.config.js
 ```
 
 ```js
-// safemigrate.config.js
+// safe-migrate.config.js
 export default {
   target: { root: "../my-legacy-app" },
   runtime: { image: "node:16" },       // the app's own pinned runtime, not yours
@@ -130,13 +130,14 @@ export default {
 ```
 
 ```bash
-npx safemigrate --only src/components/Article.js --dry-run
+npx safe-migrate --only src/components/Article.js --dry-run
 ```
 
 ## Constraints on generated tests
 
-Enforced by an AST pass (`src/constraints.js`), not a linter suggestion — a test coupled
-to framework internals breaks during the migration it was supposed to protect.
+Enforced by an AST (abstract syntax tree) pass over each generated test
+(`src/constraints.js`), not a linter suggestion — a test coupled to framework internals
+breaks during the migration it was supposed to protect.
 
 | Rule | Why |
 |---|---|
@@ -149,7 +150,18 @@ to framework internals breaks during the migration it was supposed to protect.
 
 ## Status
 
-WIP
+Pre-alpha. Loose checklist of the pipeline above, in build order — see [`PRD.md`](./PRD.md)
+for the full milestone breakdown and reasoning.
+
+- [x] **SELECT** — hardcoded via `--only <path>`; auto-selection from the dep graph is M4
+- [x] **CONTEXT** — real assembly for a single `--only` target; full retrieval for
+      auto-selected targets is M4
+- [x] **GENERATE** — real agent call, provider-agnostic
+- [x] **static gate** — real AST pass
+- [ ] **green gate** — stubbed, throws
+- [ ] **mutation gate** — stubbed, throws (M3 — the milestone that makes this worth showing)
+- [ ] **stability gate** — no-op placeholder, always passes
+- [ ] **REPORT** — computes metrics in memory; writing the report + rejection log to disk is M4
 
 ## Roadmap
 

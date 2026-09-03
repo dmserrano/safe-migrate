@@ -17,7 +17,7 @@ const OUTPUT_TAIL_CHARS = 2000;
 export const gateGreen: Gate = async (source, ctx, config) => {
   const packageRoot = path.resolve(config.target.root, config.target.package);
   const testDir = ctx.ownTestPath ? path.dirname(ctx.ownTestPath) : globBaseDir(config.target.testGlob);
-  const tempRelPath = path.join(testDir, `${moduleStem(ctx.modulePath)}.safemigrate-generated.${crypto.randomUUID()}.js`);
+  const tempRelPath = path.join(testDir, `${moduleStem(ctx.modulePath)}.safe-migrate-generated.${crypto.randomUUID()}.js`);
   const tempAbsPath = path.join(packageRoot, tempRelPath);
 
   await fs.mkdir(path.dirname(tempAbsPath), { recursive: true });

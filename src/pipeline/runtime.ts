@@ -50,7 +50,7 @@ export async function runInTargetRuntime(
       await new Promise((resolve) => setTimeout(resolve, SERVICE_GRACE_PERIOD_MS));
     }
 
-    const volumeName = `safemigrate-node-modules-${hash(cwd)}`;
+    const volumeName = `safe-migrate-node-modules-${hash(cwd)}`;
     const runner = await new GenericContainer(config.runtime.image)
       .withNetworkMode(netMode)
       .withBindMounts([

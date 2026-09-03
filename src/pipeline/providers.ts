@@ -66,7 +66,7 @@ async function runClaudeCli(prompt: string, cwd: string): Promise<ProviderResult
 }
 
 async function runCopilotCli(prompt: string, cwd: string): Promise<ProviderResult> {
-  const scratchRelative = `.safemigrate-scratch-${Date.now()}-${Math.random().toString(36).slice(2)}.test.js`;
+  const scratchRelative = `.safe-migrate-scratch-${Date.now()}-${Math.random().toString(36).slice(2)}.test.js`;
   const scratchAbs = path.join(cwd, scratchRelative);
 
   const fullPrompt =

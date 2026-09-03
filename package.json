@@ -1,10 +1,10 @@
 {
-  "name": "safemigrate",
+  "name": "safe-migrate",
   "version": "0.0.1",
   "description": "Migration-aware characterization test generator for legacy JS codebases",
   "type": "module",
   "bin": {
-    "safemigrate": "./dist/cli.js"
+    "safe-migrate": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",

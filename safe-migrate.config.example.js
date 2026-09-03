@@ -37,7 +37,7 @@ export default {
   },
 
   output: {
-    reportDir: ".safemigrate/reports",
-    rejectionLog: ".safemigrate/rejected",   // publish this — it is the credibility artifact
+    reportDir: ".safe-migrate/reports",
+    rejectionLog: ".safe-migrate/rejected",   // publish this — it is the credibility artifact
   },
 };

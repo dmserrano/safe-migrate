@@ -23,7 +23,7 @@ export async function generateTest(
   // ticket 02's calibration). See ticket 04's design note: this is the REQUIRED layer,
   // not defense in depth. Restored in `finally` regardless of outcome.
   const excludedAbs = ctx.ownTestPath ? path.resolve(packageRoot, ctx.ownTestPath) : null;
-  const excludedTmp = excludedAbs ? `${excludedAbs}.excluded-by-safemigrate` : null;
+  const excludedTmp = excludedAbs ? `${excludedAbs}.excluded-by-safe-migrate` : null;
 
   if (excludedAbs && excludedTmp) {
     await fs.rename(excludedAbs, excludedTmp);

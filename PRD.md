@@ -1,4 +1,4 @@
-# safemigrate — Migration-Aware Characterization Test Generator
+# safe-migrate — Migration-Aware Characterization Test Generator
 
 **Status:** design
 **Owner:** Dominic Serrano
@@ -10,7 +10,7 @@ The end goal is a repo-agnostic tool for any legacy JS codebase facing any break
 package upgrade (framework major version, Node runtime, anything Dependabot leaves red).
 Winds is the *validation target through M0–M3* — the harness is built and debugged there
 because it already has a usable oracle (its API test suite). The config schema
-(`safemigrate.config.js`) is deliberately shaped to generalize from day one — `target`,
+(`safe-migrate.config.js`) is deliberately shaped to generalize from day one — `target`,
 `runtime`, and `migration` are already parameters, not hardcoded — so M4/M5 is a
 verification pass on that claim (does anything Winds-specific leak into
 `src/pipeline/**`?), not a rewrite. See M4 and M6 below for how this affects done-when.
@@ -214,7 +214,7 @@ least once.
 
 ### M2 — Generate + green gate (2 weeks)
 Steps 3–5, hardcoded target list. Bounded retry with error feedback.
-**Done when:** `safemigrate run` produces N passing tests unattended.
+**Done when:** `safe-migrate run` produces N passing tests unattended.
 
 ### M3 — Mutation gate (2 weeks) ← the important one
 Step 6. Stryker integration, per-module scoping, threshold config.
@@ -248,12 +248,12 @@ the untested React frontend, exercising the config-shaped differences called out
 This is also the checkpoint for the end-goal claim in the header: before or alongside the
 frontend port, audit `src/pipeline/**` for anything that only works because it's Winds —
 a hardcoded path, an assumption about `app`/`api` package layout, a Winds-specific
-fixture. Everything repo-specific should already live in `safemigrate.config.js` or in
+fixture. Everything repo-specific should already live in `safe-migrate.config.js` or in
 prompt exemplars, not in pipeline code. If it doesn't, that's a bug to fix at M4, not a
 reason to defer generalization to a later phase — the config schema was written to make
 this a verification pass, not a rewrite.
 
-**Done when:** `safemigrate run --upgrade react@18` picks its own targets, and the
+**Done when:** `safe-migrate run --upgrade react@18` picks its own targets, and the
 pipeline-code audit above turns up nothing that only works for Winds.
 
 ### M5 — Package (1–2 weeks)
@@ -332,7 +332,7 @@ verification (M1–M3) already hold up.
 
 ### Backlog: config-populating `init` step (post-M5)
 
-`safemigrate.config.js` is hand-authored through M5 — `target`, `runtime`, and
+`safe-migrate.config.js` is hand-authored through M5 — `target`, `runtime`, and
 `migration` are written by a human pointing the tool at a repo. A stretch goal: an `init`
 (or a `generate`-time pre-pass) that inspects the target repo and proposes values instead
 — detected pinned Node/container version, an existing test command, dependency versions
@@ -365,15 +365,15 @@ score. Keep mutation score as the M3 floor either way — this is about whether 
 
 ### Backlog: npm package distribution (post-M5)
 
-The tool should be installable (`npm install -g safemigrate` / `npx safemigrate`), not
+The tool should be installable (`npm install -g safe-migrate` / `npx safe-migrate`), not
 just run from a checked-out clone. Gaps beyond what already exists (`bin` entry,
 `type: module`, `engines`):
 
 - A `files`/`exports` allowlist in `package.json` — nothing currently scopes what a
   publish would ship.
 - Config discovery. Today `-c/--config` is a single hardcoded relative flag
-  (`./safemigrate.config.js`). An installed CLI wants `cosmiconfig`-style walk-up
-  discovery (`safemigrate.config.js`, or a `package.json#safemigrate` key), matching the
+  (`./safe-migrate.config.js`). An installed CLI wants `cosmiconfig`-style walk-up
+  discovery (`safe-migrate.config.js`, or a `package.json#safe-migrate` key), matching the
   eslint/prettier convention this tool is implicitly promising by shape.
 - A repo-relative-assumption audit — anything that currently assumes it's running from
   inside a sibling checkout of safe-migrate rather than `node_modules/.bin` in an

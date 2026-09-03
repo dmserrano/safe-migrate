@@ -6,9 +6,9 @@ import { run } from "./pipeline/index.js";
 import type { SafeMigrateConfig } from "./types.js";
 
 program
-  .name("safemigrate")
+  .name("safe-migrate")
   .description("Migration-aware characterization test generator")
-  .option("-c, --config <path>", "config file", "./safemigrate.config.js")
+  .option("-c, --config <path>", "config file", "./safe-migrate.config.js")
   .option("--only <path>", "single module (use until selection lands at M4)")
   .option("--dry-run", "generate and gate, but do not write or commit")
   .action(async (opts: { config: string; only?: string; dryRun?: boolean }) => {

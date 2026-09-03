@@ -1,4 +1,4 @@
-/** Shared shapes across the pipeline. Config is user-authored (safemigrate.config.js)
+/** Shared shapes across the pipeline. Config is user-authored (safe-migrate.config.js)
  * and not itself migrated to TS — kept loose with an index signature rather than
  * pretending to fully pin down a schema that's still being discovered per-repo. */
 
