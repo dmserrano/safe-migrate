@@ -25,7 +25,7 @@ const Status = {
   Timeout: "Timeout",
 } as const;
 
-interface MutantResult {
+export interface MutantResult {
   id: string;
   mutatorName: string;
   status: string;
@@ -41,6 +41,24 @@ export interface MutationScore {
 
 const SURVIVING_STATUSES = new Set<string>([Status.Survived, Status.NoCoverage]);
 const KILLED_STATUSES = new Set<string>([Status.Killed, Status.Timeout]);
+
+// Pure — no Stryker/Docker. Split out so the score math is unit-testable without
+// running real mutants.
+export function computeScore(mutants: MutantResult[]): MutationScore {
+  // NoCoverage never actually fires — the command runner has no per-mutant coverage
+  // analysis, so this only drops Ignored mutants in practice. Kept for intent/in
+  // case a future runner does support it.
+  const covered = mutants.filter((m) => m.status !== Status.Ignored && m.status !== Status.NoCoverage);
+  const killed = covered.filter((m) => KILLED_STATUSES.has(m.status));
+  const survived = mutants.filter((m) => SURVIVING_STATUSES.has(m.status));
+
+  return {
+    score: covered.length === 0 ? 0 : killed.length / covered.length,
+    covered: covered.length,
+    killed: killed.length,
+    survived,
+  };
+}
 
 // Shared by the gate (scores a generated test) and scripts/calibrate-mutation-
 // threshold.ts (scores an existing human-written test, to derive the gate's own
@@ -73,22 +91,12 @@ export async function scoreMutation(
       // Else Stryker mutates a copy in its own sandbox dir the fixed-path docker
       // exec above can't see — every mutant would falsely "survive".
       inPlace: true,
+      // Default reporters write report files into the TARGET repo (reports/mutation/
+      // *.html) — we consume runMutationTest()'s return value directly, don't need them.
+      reporters: [],
     });
     const mutants = (await stryker.runMutationTest()) as MutantResult[];
-
-    // NoCoverage never actually fires — the command runner has no per-mutant coverage
-    // analysis, so this only drops Ignored mutants in practice. Kept for intent/in
-    // case a future runner does support it.
-    const covered = mutants.filter((m) => m.status !== Status.Ignored && m.status !== Status.NoCoverage);
-    const killed = covered.filter((m) => KILLED_STATUSES.has(m.status));
-    const survived = mutants.filter((m) => SURVIVING_STATUSES.has(m.status));
-
-    return {
-      score: covered.length === 0 ? 0 : killed.length / covered.length,
-      covered: covered.length,
-      killed: killed.length,
-      survived,
-    };
+    return computeScore(mutants);
   } finally {
     process.chdir(originalCwd);
     await session.stop();

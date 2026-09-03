@@ -56,7 +56,7 @@ export function scopeToFile(testCommand: string, testGlob: string, relPath: stri
     : `${testCommand} ${relPath}`;
 }
 
-function globBaseDir(glob: string): string {
+export function globBaseDir(glob: string): string {
   const parts = glob.split("/");
   const idx = parts.findIndex((p) => /[*{}]/.test(p));
   return parts.slice(0, idx === -1 ? parts.length : idx).join("/") || ".";

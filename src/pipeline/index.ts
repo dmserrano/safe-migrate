@@ -14,30 +14,36 @@ import { gateStable } from "./gates/stable.js";
 import { writeReport } from "./report.js";
 import type { Attempt, Gate, GateFailure, SafeMigrateConfig, TargetResult } from "../types.js";
 
+// Cheap gates first — static check costs nothing, mutation costs minutes.
+const DEFAULT_GATES: Gate[] = [gateStatic, gateGreen, gateStable, gateMutation];
+
 export async function run(
   config: SafeMigrateConfig,
-  { only }: { only?: string } = {},
+  { only, gates }: { only?: string; gates?: Gate[] } = {},
 ): Promise<TargetResult[]> {
   const targets = only ? [only] : await selectTargets(config);
   const results: TargetResult[] = [];
 
   for (const target of targets) {
-    results.push(await processTarget(target, config));
+    results.push(await processTarget(target, config, gates ?? DEFAULT_GATES));
   }
 
   await writeReport(results, config);
   return results;
 }
 
-async function processTarget(target: string, config: SafeMigrateConfig): Promise<TargetResult> {
+export async function processTarget(
+  target: string,
+  config: SafeMigrateConfig,
+  gates: Gate[] = DEFAULT_GATES,
+  generate: typeof generateTest = generateTest,
+): Promise<TargetResult> {
   const ctx = await assembleContext(target, config);
   const attempts: Attempt[] = [];
 
   for (let i = 0; i < config.gates.maxGenerationAttempts; i++) {
-    const { source, tokens } = await generateTest(ctx, config, attempts);
+    const { source, tokens } = await generate(ctx, config, attempts);
 
-    // Cheap gates first — static check costs nothing, mutation costs minutes.
-    const gates: Gate[] = [gateStatic, gateGreen, gateStable, gateMutation];
     let failure: GateFailure | null = null;
 
     for (const gate of gates) {

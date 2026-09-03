@@ -10,7 +10,8 @@
     "build": "tsc",
     "start": "npm run build && node dist/cli.js",
     "calibrate": "npm run build && node dist/scripts/calibrate-mutation-threshold.js",
-    "test": "node --test",
+    "test": "npm run build && node --test 'dist/**/*.test.js'",
+    "test:integration": "npm run build && node --test --test-concurrency=1 'dist/**/*.itest.js'",
     "prepublishOnly": "npm run build"
   },
   "engines": {

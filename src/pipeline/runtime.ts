@@ -105,6 +105,6 @@ async function exec(runner: StartedTestContainer, command: string): Promise<Runt
   return { ok: result.exitCode === 0, exitCode: result.exitCode, output: result.output };
 }
 
-function hash(input: string): string {
+export function hash(input: string): string {
   return crypto.createHash("sha1").update(input).digest("hex").slice(0, 12);
 }

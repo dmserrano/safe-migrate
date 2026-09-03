@@ -3,3 +3,8 @@ node_modules/
 NOTES.md
 .scratch/
 dist/
+
+# test-run byproducts in the integration-test fixture — never committed regardless
+# of a leak's root cause
+test/fixtures/target-repo/reports/
+test/fixtures/target-repo/**/*.safe-migrate-generated.*.js
