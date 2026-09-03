@@ -384,3 +384,21 @@ just run from a checked-out clone. Gaps beyond what already exists (`bin` entry,
 Not blocking M0-M5. Revisit once the harness has proven itself against Winds and the
 question shifts from "does this work" to "can someone else install this against their
 own repo."
+
+### Backlog: constraint rules are hardcoded to one framework's assumptions (M4+)
+
+`src/constraints.ts`'s `CONSTRAINTS` list (no Enzyme, no snapshots, no internals
+assertions, no self-mock, no empty `waitFor`) is a fixed array baked into the harness.
+It works only because it happens to match the current target's stack (React/Jest-shaped
+tests). A different repo or framework (Vue, Angular, a non-React backend, a repo not
+using Jest's `waitFor`/snapshot vocabulary at all) would need different rules, and
+there's no seam for that today short of hand-editing this file per target — which
+conflicts with the PRD's stated end goal of "any legacy JS repo, any breaking upgrade."
+
+Not solving now — flagged during ticket work while deduping the constraint id strings
+into a typed const, as a "we'll need this eventually" observation, not a current defect.
+Revisit alongside M4's pipeline-generalization audit (ticket 12): likely direction is
+config-driven or framework-detected rule sets rather than one hardcoded list, but that's
+a real design decision (how much control does a repo owner get over the rules vs. how
+much are they fixed invariants of "characterization test" itself?) worth its own pass,
+not a quick fix.
