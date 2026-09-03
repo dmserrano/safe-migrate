@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "start": "npm run build && node dist/cli.js",
+    "calibrate": "npm run build && node dist/scripts/calibrate-mutation-threshold.js",
     "test": "node --test",
     "prepublishOnly": "npm run build"
   },

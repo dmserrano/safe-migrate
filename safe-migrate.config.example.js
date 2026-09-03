@@ -23,7 +23,7 @@ export default {
 
   gates: {
     maxGenerationAttempts: 3,
-    mutationScoreThreshold: 0.6,   // arbitrary until M3 produces real data
+    mutationScoreThreshold: 0.17,   // p25 of Winds/api utils calibration — see NOTES.md
     stabilityRuns: 3,
   },
 
