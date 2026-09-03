@@ -1,6 +1,17 @@
 <div align="center">
 
-# safe-migrate
+<picture>
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://raw.githubusercontent.com/dmserrano/safe-migrate/main/assets/logo/safe-migrate-lockup-light-1040.png">
+  <source
+    media="(prefers-color-scheme: light)"
+    srcset="https://raw.githubusercontent.com/dmserrano/safe-migrate/main/assets/logo/safe-migrate-lockup-1040.png">
+  <img
+    alt="safe-migrate"
+    src="https://raw.githubusercontent.com/dmserrano/safe-migrate/main/assets/logo/safe-migrate-lockup-1040.png"
+    width="420">
+</picture>
 
 **Verified characterization tests for JS apps facing breaking dependency upgrades.**
 
