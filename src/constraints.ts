@@ -14,30 +14,43 @@ import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import type { Context } from "./types.js";
 
+// Single source of truth for constraint ids — avoids typo-prone string duplication
+// between CONSTRAINTS and the violated.add(...) calls below (a misspelled literal
+// there would silently never match, TS can't catch a plain string typo).
+export const ConstraintId = {
+  NoEnzyme: "no-enzyme",
+  NoSnapshots: "no-snapshots",
+  NoInternals: "no-internals",
+  NoSelfMock: "no-self-mock",
+  NoEmptyWaitFor: "no-empty-waitfor",
+  ParseError: "parse-error", // not in CONSTRAINTS — synthetic, parse failure only
+} as const;
+export type ConstraintId = (typeof ConstraintId)[keyof typeof ConstraintId];
+
 export interface ConstraintDef {
-  id: string;
+  id: ConstraintId;
   reason: string;
 }
 
 export const CONSTRAINTS: ConstraintDef[] = [
   {
-    id: "no-enzyme",
+    id: ConstraintId.NoEnzyme,
     reason: "Enzyme has no React 18 support; breaks during the migration by construction.",
   },
   {
-    id: "no-snapshots",
+    id: ConstraintId.NoSnapshots,
     reason: "Snapshots break on any markup change, including harmless ones.",
   },
   {
-    id: "no-internals",
+    id: ConstraintId.NoInternals,
     reason: "Assertions on component internals are coupled to the framework version.",
   },
   {
-    id: "no-self-mock",
+    id: ConstraintId.NoSelfMock,
     reason: "Mocking the module under test means the test exercises the mock.",
   },
   {
-    id: "no-empty-waitfor",
+    id: ConstraintId.NoEmptyWaitFor,
     reason: "waitFor without an assertion inside is a common false-pass.",
   },
 ];
@@ -62,16 +75,16 @@ export function checkConstraints(
   } catch (err) {
     return {
       ok: false,
-      violations: [{ id: "parse-error", reason: `Source failed to parse: ${(err as Error).message}` }],
+      violations: [{ id: ConstraintId.ParseError, reason: `Source failed to parse: ${(err as Error).message}` }],
     };
   }
 
-  const violated = new Set<string>();
+  const violated = new Set<ConstraintId>();
   const modStem = ctx.modulePath ? moduleStem(ctx.modulePath) : null;
 
   traverse(ast, {
     ImportDeclaration(path) {
-      if (path.node.source.value === "enzyme") violated.add("no-enzyme");
+      if (path.node.source.value === "enzyme") violated.add(ConstraintId.NoEnzyme);
     },
     CallExpression(path) {
       const callee = path.node.callee;
@@ -79,10 +92,10 @@ export function checkConstraints(
       if (t.isMemberExpression(callee) && t.isIdentifier(callee.property)) {
         const prop = callee.property.name;
         if (prop === "toMatchSnapshot" || prop === "toMatchInlineSnapshot") {
-          violated.add("no-snapshots");
+          violated.add(ConstraintId.NoSnapshots);
         }
         if (prop === "state" || prop === "instance") {
-          violated.add("no-internals");
+          violated.add(ConstraintId.NoInternals);
         }
       }
 
@@ -94,7 +107,7 @@ export function checkConstraints(
       ) {
         const arg = path.node.arguments[0];
         if (t.isStringLiteral(arg) && arg.value.includes(modStem)) {
-          violated.add("no-self-mock");
+          violated.add(ConstraintId.NoSelfMock);
         }
       }
 
@@ -106,7 +119,7 @@ export function checkConstraints(
           t.isBlockStatement(arg.body) &&
           arg.body.body.length === 0
         ) {
-          violated.add("no-empty-waitfor");
+          violated.add(ConstraintId.NoEmptyWaitFor);
         }
       }
     },
