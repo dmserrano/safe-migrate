@@ -10,11 +10,18 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { moduleStem } from "../../paths.js";
 import { runInTargetRuntime } from "../runtime.js";
-import type { Gate } from "../../types.js";
+import type { Context, SafeMigrateConfig, Gate } from "../../types.js";
 
 const OUTPUT_TAIL_CHARS = 2000;
 
-export const gateGreen: Gate = async (source, ctx, config) => {
+// Writes the generated test into the target repo's test dir under a unique temp name,
+// runs fn, always cleans up. Shared by green and mutation gates.
+export async function withGeneratedTestFile<T>(
+  source: string,
+  ctx: Context,
+  config: SafeMigrateConfig,
+  fn: (packageRoot: string, tempRelPath: string) => Promise<T>,
+): Promise<T> {
   const packageRoot = path.resolve(config.target.root, config.target.package);
   const testDir = ctx.ownTestPath ? path.dirname(ctx.ownTestPath) : globBaseDir(config.target.testGlob);
   const tempRelPath = path.join(testDir, `${moduleStem(ctx.modulePath)}.safe-migrate-generated.${crypto.randomUUID()}.js`);
@@ -24,20 +31,26 @@ export const gateGreen: Gate = async (source, ctx, config) => {
   await fs.writeFile(tempAbsPath, source, "utf8");
 
   try {
+    return await fn(packageRoot, tempRelPath);
+  } finally {
+    await fs.rm(tempAbsPath, { force: true });
+  }
+}
+
+export const gateGreen: Gate = async (source, ctx, config) => {
+  return withGeneratedTestFile(source, ctx, config, async (packageRoot, tempRelPath) => {
     const scopedCommand = scopeToFile(config.runtime.testCommand, config.target.testGlob, tempRelPath);
     const result = await runInTargetRuntime(scopedCommand, packageRoot, config);
 
     return result.ok
       ? { ok: true }
       : { ok: false, detail: result.output.slice(-OUTPUT_TAIL_CHARS) };
-  } finally {
-    await fs.rm(tempAbsPath, { force: true });
-  }
+  });
 };
 
 // Substitute the literal testGlob if present in testCommand; else append the file,
 // which most runners (jest, mocha, vitest) accept as a positional scope argument.
-function scopeToFile(testCommand: string, testGlob: string, relPath: string): string {
+export function scopeToFile(testCommand: string, testGlob: string, relPath: string): string {
   return testCommand.includes(testGlob)
     ? testCommand.replaceAll(testGlob, relPath)
     : `${testCommand} ${relPath}`;

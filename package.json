@@ -19,6 +19,8 @@
     "@babel/parser": "^8.0.4",
     "@babel/traverse": "^8.0.4",
     "@babel/types": "^8.0.4",
+    "@stryker-mutator/api": "^9.6.1",
+    "@stryker-mutator/core": "^9.6.1",
     "commander": "^12.0.0",
     "execa": "^9.0.0",
     "fast-glob": "^3.3.3",
