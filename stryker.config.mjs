@@ -29,4 +29,11 @@ export default {
   commandRunner: { command: "npm run build && node --test 'dist/**/*.test.js'" },
   reporters: ["clear-text", "dashboard"],
   coverageAnalysis: "off",
+  dashboard: {
+    // No "https://" — the dashboard API and the README badge URL both key on this
+    // exact "github.com/owner/repo" shorthand, not a full URL.
+    project: "github.com/dmserrano/safe-migrate",
+    version: "main",
+    reportType: "mutationScore",
+  },
 };

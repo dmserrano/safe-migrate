@@ -14,6 +14,13 @@ import type { Context, SafeMigrateConfig, Gate } from "../../types.js";
 
 const OUTPUT_TAIL_CHARS = 2000;
 
+// Where a generated test for ctx will be saved, relative to packageRoot — the
+// module's own-test dir if it has one, else the testGlob's base dir. Exported so
+// generate.ts's prompt can give the model the real import path instead of a guess.
+export function resolveTestDir(ctx: Context, config: SafeMigrateConfig): string {
+  return ctx.ownTestPath ? path.dirname(ctx.ownTestPath) : globBaseDir(config.target.testGlob);
+}
+
 // Writes the generated test into the target repo's test dir under a unique temp name,
 // runs fn, always cleans up. Shared by green and mutation gates.
 export async function withGeneratedTestFile<T>(
@@ -23,7 +30,7 @@ export async function withGeneratedTestFile<T>(
   fn: (packageRoot: string, tempRelPath: string) => Promise<T>,
 ): Promise<T> {
   const packageRoot = path.resolve(config.target.root, config.target.package);
-  const testDir = ctx.ownTestPath ? path.dirname(ctx.ownTestPath) : globBaseDir(config.target.testGlob);
+  const testDir = resolveTestDir(ctx, config);
   const tempRelPath = path.join(testDir, `${moduleStem(ctx.modulePath)}.safe-migrate-generated.${crypto.randomUUID()}.js`);
   const tempAbsPath = path.join(packageRoot, tempRelPath);
 

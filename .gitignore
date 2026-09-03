@@ -6,5 +6,6 @@ dist/
 
 # test-run byproducts in the integration-test fixture — never committed regardless
 # of a leak's root cause
+.stryker-tmp/
 test/fixtures/target-repo/reports/
 test/fixtures/target-repo/**/*.safe-migrate-generated.*.js

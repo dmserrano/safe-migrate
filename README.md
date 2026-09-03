@@ -18,6 +18,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](#status)
+[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fdmserrano%2Fsafe-migrate%2Fmain)](https://dashboard.stryker-mutator.io/reports/github.com/dmserrano/safe-migrate/main)
 
 [Why](#why) · [Runtime separation](#runtime-separation) · [How it works](#how-it-works) · [Quickstart](#quickstart) · [Constraints](#constraints-on-generated-tests) · [Status](#status) · [Roadmap](#roadmap)
 

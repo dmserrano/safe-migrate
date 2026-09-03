@@ -1,24 +1,21 @@
 /**
- * Provider dispatch for the generate step. Provider-agnostic by construction: every
- * provider returns `{source, tokens}`, no gate cares which one produced it.
+ * Provider dispatch for the generate step. Every provider returns `{source, tokens}`,
+ * no gate cares which one produced it. CLI over SDK for both (see PRD § Open
+ * questions) — this step only needs prompt-in/text-out.
  *
- * Two providers implemented at M2 — CLI over SDK for both, decided at implementation
- * time (see PRD § Open questions): a CLI is zero extra dependency and this step only
- * ever needs "prompt in, text out," which an SDK's finer context control doesn't buy
- * anything for here.
+ * Not symmetric, and that's load-bearing:
  *
- * The two are NOT symmetric, and that's load-bearing, not an oversight:
- *
- * - `claude-cli` runs with `--restricted` (no Bash/file-write tools) and
- *   `--output-format json`, so it's a genuinely text-in/text-out call — it cannot see
- *   the filesystem beyond what's in the prompt, so no move-aside step is needed for it.
- * - `copilot-cli` (`gh copilot`) requires `--allow-all-tools` to run non-interactively
- *   at all (no TTY to approve tool use otherwise — see NOTES.md) and, observed directly
- *   during the M1 hand-driven pass, writes its output to a file rather than returning
- *   text. It is unavoidably agentic: it can and will explore the filesystem on its own
- *   initiative, which is exactly why the own-test move-aside/restore in generate.ts is
- *   required for this provider (see ticket 04's design note) and load-bearing, not
- *   defense in depth.
+ * - `claude-cli`: `--tools ""` alone isn't enough — on large prompts the model
+ *   hallucinates tool use it doesn't have (fabricated `yarn mocha` output, invented
+ *   "prompt injection" findings; found live, 2 of 4 real Winds modules). Fixed with
+ *   `--append-system-prompt` stating flatly there are no tools. `--restricted` alone
+ *   is also not enough — it doesn't strip Edit/Write.
+ * - `copilot-cli` (`gh copilot`): agentic by design, writes output to a file rather
+ *   than returning text — why generate.ts's own-test move-aside/restore is required,
+ *   not defense in depth. Needs `--allow-all-tools` (no TTY to approve) and
+ *   `--allow-all-paths` (else writes get silently skipped). The scratch path must be
+ *   ABSOLUTE — a relative one resolves against the git repo ROOT, not this
+ *   process's cwd (found live — wrote outside `target.package` entirely).
  */
 import { execa } from "execa";
 import fs from "node:fs/promises";
@@ -48,10 +45,16 @@ export async function runProvider(
   }
 }
 
+const NO_TOOLS_SYSTEM_PROMPT =
+  "You have NO tools available in this session, not even read-only ones. Do not " +
+  "attempt to use any tool, run any command, or reference reading/writing any file. " +
+  "Respond with ONLY the test file source code, wrapped in a single code block, and " +
+  "nothing else.";
+
 async function runClaudeCli(prompt: string, cwd: string): Promise<ProviderResult> {
   const { stdout } = await execa(
     "claude",
-    ["-p", "--restricted", "--output-format", "json", prompt],
+    ["-p", "--tools", "", "--append-system-prompt", NO_TOOLS_SYSTEM_PROMPT, "--output-format", "json", prompt],
     { cwd },
   );
 
@@ -66,15 +69,14 @@ async function runClaudeCli(prompt: string, cwd: string): Promise<ProviderResult
 }
 
 async function runCopilotCli(prompt: string, cwd: string): Promise<ProviderResult> {
-  const scratchRelative = `.safe-migrate-scratch-${Date.now()}-${Math.random().toString(36).slice(2)}.test.js`;
-  const scratchAbs = path.join(cwd, scratchRelative);
+  const scratchAbs = path.join(cwd, `.safe-migrate-scratch-${Date.now()}-${Math.random().toString(36).slice(2)}.test.js`);
 
   const fullPrompt =
     `${prompt}\n\nWrite the complete test file content to a NEW file at exactly this ` +
-    `path, relative to the repo root you are running in: ${scratchRelative}\n` +
+    `ABSOLUTE path: ${scratchAbs}\n` +
     `Do not create, modify, or delete any other file.`;
 
-  await execa("gh", ["copilot", "-p", fullPrompt, "--allow-all-tools"], { cwd });
+  await execa("gh", ["copilot", "-p", fullPrompt, "--allow-all-tools", "--allow-all-paths"], { cwd });
 
   try {
     const source = await fs.readFile(scratchAbs, "utf8");

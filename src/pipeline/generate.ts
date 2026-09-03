@@ -8,6 +8,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { CONSTRAINTS } from "../constraints.js";
 import { runProvider } from "./providers.js";
+import { resolveTestDir } from "./gates/green.js";
 import type { Attempt, Context, SafeMigrateConfig } from "../types.js";
 
 export async function generateTest(
@@ -15,7 +16,7 @@ export async function generateTest(
   config: SafeMigrateConfig,
   priorAttempts: Attempt[] = [],
 ): Promise<{ source: string; tokens?: number }> {
-  const prompt = buildPrompt(ctx, priorAttempts);
+  const prompt = buildPrompt(ctx, config, priorAttempts);
   const packageRoot = path.resolve(config.target.root, config.target.package);
 
   // Physical exclusion, not just omission from ctx — an agentic provider can and will
@@ -38,8 +39,20 @@ export async function generateTest(
   }
 }
 
-function buildPrompt(ctx: Context, priorAttempts: Attempt[]): string {
+function buildPrompt(ctx: Context, config: SafeMigrateConfig, priorAttempts: Attempt[]): string {
   const rules = CONSTRAINTS.map((c) => `- ${c.id}: ${c.reason}`).join("\n");
+
+  // Compute the exact import path rather than let the model guess it — guesses were
+  // wrong for own-tests nested deeper than the testGlob's base dir (found live).
+  // Extension omitted: import-extension convention varies, taught via the exemplar.
+  const testDir = resolveTestDir(ctx, config);
+  const packageRoot = path.resolve(config.target.root, config.target.package);
+  const relImport = path
+    .relative(path.resolve(packageRoot, testDir), path.resolve(packageRoot, ctx.modulePath))
+    .replace(/\.[jt]sx?$/, "")
+    .split(path.sep)
+    .join("/");
+  const importPath = `\nYour test file will be saved in "${testDir}/". Import the module under\ntest using exactly this relative path (adjust only the extension, if any, to match\nthe repo's own import convention shown below): "${relImport.startsWith(".") ? relImport : `./${relImport}`}"\n`;
 
   const feedback = priorAttempts.length
     ? `\nPrevious attempts failed:\n${priorAttempts
@@ -69,7 +82,7 @@ Constraints (violating any of these means the test is rejected):
 ${rules}
 
 Assert user-visible behavior, not implementation. Prefer Testing Library queries.
-${imports}${conventions}${feedback}
+${importPath}${imports}${conventions}${feedback}
 Module: ${ctx.modulePath}
 ${ctx.source ?? ""}`;
 }
