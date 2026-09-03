@@ -108,3 +108,11 @@ agent CLI manually on one API module (any provider — see Open decisions), is h
 failure modes get learned, and knowing which generated tests to reject is the entire
 value of this tool. Automate
 from M2.
+
+## Commit & Comment Rules
+
+- Commit messages must be under 50 characters for the subject line, use the imperative
+  mood, and omit body text unless required.
+- Code comments must be extremely terse, direct, and limited to crucial context only.
+  Sacrifice full grammar for the sake of concision if needed.
+- No conversational filler, pleasantries, or explanations of what was done.
