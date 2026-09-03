@@ -302,10 +302,16 @@ are worthless if generation and verification don't hold up.
 - Agent provider for the generation step is deliberately not pinned to one vendor.
   `config.agent.provider` selects it (`copilot-cli`, `claude-cli`, `claude-sdk`,
   `copilot-sdk`, ...); `generate.js` only needs a prompt in, text out, so no gate cares
-  which one produced the test. CLI vs SDK is still an open sub-question per provider
-  (CLI is faster to start, SDK may give better control over context) — decide at M2,
-  and expect the M1 provider (whatever license is on hand) and the M2/production
-  provider to legitimately differ.
+  which one produced the test. **Resolved at M2 (ticket 05): CLI over SDK for both
+  implemented providers** — zero extra dependency, and this step never needed an SDK's
+  finer context control, just prompt-in/text-out. `claude-cli` and `copilot-cli` are
+  NOT symmetric in practice: `claude-cli` runs `--restricted` (no filesystem tools),
+  making it a genuine text-in/text-out call; `copilot-cli` requires `--allow-all-tools`
+  to run non-interactively at all and is unavoidably agentic — it explores the
+  filesystem on its own initiative and writes its output to a file rather than
+  returning text (observed directly in ticket 02's calibration), which is why the
+  own-test move-aside/restore in `generate.ts` is load-bearing, not defense in depth.
+  `claude-sdk`/`copilot-sdk` remain unimplemented (throw clearly rather than no-op).
 - Whether to attempt backend (Express route) tests beyond the M1–M3 calibration use, or
   stay frontend-only as the v1 product surface. Current lean: frontend is the product
   (no existing coverage, more compelling migration story), API is the harness's proving

@@ -3,18 +3,79 @@
  *
  * Quality of generated tests depends more on this than on prompt wording.
  * Under-supplying context is the most likely cause of bad output at M1/M2.
+ *
+ * Scope for M2 (this ticket): a single hardcoded `--only` target. Full retrieval for
+ * arbitrary auto-selected targets (fixtures, repo-wide framework-version detection) is
+ * ticket 14 (M4) — out of scope here.
  */
-import type { Context, SafeMigrateConfig } from "../types.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+import fg from "fast-glob";
+import { parse } from "@babel/parser";
+import traverse from "@babel/traverse";
+import * as t from "@babel/types";
+import type { Context, ImportSummary, SafeMigrateConfig } from "../types.js";
 
 export async function assembleContext(
   modulePath: string,
   config: SafeMigrateConfig,
 ): Promise<Context> {
-  // TODO(M2):
-  //   - module source
-  //   - direct imports (signatures, not full bodies — watch the context budget)
-  //   - existing test conventions in the repo, if any (Winds has none; supply an exemplar)
-  //   - available fixtures / test utils
-  //   - framework versions currently in play (matters: React 16 idioms != React 18)
-  return { modulePath, source: null, imports: [], conventions: null };
+  const packageRoot = path.resolve(config.target.root, config.target.package);
+  const absModulePath = path.resolve(packageRoot, modulePath);
+
+  const source = await fs.readFile(absModulePath, "utf8");
+  const imports = extractImports(source);
+
+  const testFiles = await fg(config.target.testGlob, { cwd: packageRoot, absolute: true });
+  const moduleStem = stem(modulePath);
+
+  const ownTestAbs = testFiles.find((f) => stem(f).replace(/\.(test|spec)$/, "") === moduleStem) ?? null;
+
+  // The own test is excluded from context; a DIFFERENT sibling test (if any) is
+  // included as a conventions exemplar, to teach the repo's real testing idioms
+  // without leaking the answer for the module under test.
+  const siblingTestAbs = testFiles.find((f) => f !== ownTestAbs) ?? null;
+  const conventions = siblingTestAbs ? await fs.readFile(siblingTestAbs, "utf8") : null;
+
+  return {
+    modulePath,
+    source,
+    imports,
+    conventions,
+    ownTestPath: ownTestAbs ? path.relative(packageRoot, ownTestAbs) : null,
+  };
+}
+
+function stem(filePath: string): string {
+  return path.basename(filePath).replace(/\.[jt]sx?$/, "");
+}
+
+function extractImports(source: string): ImportSummary[] {
+  let ast: t.File;
+  try {
+    ast = parse(source, { sourceType: "module", plugins: ["jsx", "typescript"] });
+  } catch {
+    // If the module under test doesn't parse, generation will fail downstream anyway —
+    // context assembly shouldn't be the thing that crashes the pipeline over it.
+    return [];
+  }
+
+  const imports: ImportSummary[] = [];
+  traverse(ast, {
+    ImportDeclaration(nodePath) {
+      const specifier = nodePath.node.source.value;
+      const exportsUsed = nodePath.node.specifiers
+        .map((s) => {
+          if (t.isImportDefaultSpecifier(s)) return "default";
+          if (t.isImportNamespaceSpecifier(s)) return "*";
+          if (t.isImportSpecifier(s)) {
+            return t.isIdentifier(s.imported) ? s.imported.name : s.imported.value;
+          }
+          return null;
+        })
+        .filter((x): x is string => x !== null);
+      imports.push({ specifier, exportsUsed });
+    },
+  });
+  return imports;
 }
