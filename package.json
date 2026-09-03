@@ -22,7 +22,8 @@
     "commander": "^12.0.0",
     "execa": "^9.0.0",
     "fast-glob": "^3.3.3",
-    "picocolors": "^1.0.0"
+    "picocolors": "^1.0.0",
+    "testcontainers": "^12.1.0"
   },
   "devDependencies": {
     "@types/babel__traverse": "^7.28.0",

@@ -5,6 +5,7 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
+import { moduleStem } from "./paths.js";
 import type { Context } from "./types.js";
 
 // avoid typo-prone duplicate id strings
@@ -46,12 +47,6 @@ export const CONSTRAINTS: ConstraintDef[] = [
   },
 ];
 
-/** jest.mock() args are specifiers, not full paths — compare by basename. */
-function moduleStem(modulePath: string): string {
-  const base = modulePath.split("/").pop() ?? modulePath;
-  return base.replace(/\.[jt]sx?$/, "");
-}
-
 export function checkConstraints(
   src: string,
   ctx: Partial<Context> = {},
@@ -70,6 +65,7 @@ export function checkConstraints(
   }
 
   const violated = new Set<ConstraintId>();
+  // jest.mock() args are specifiers, not full paths — compare by basename.
   const modStem = ctx.modulePath ? moduleStem(ctx.modulePath) : null;
 
   traverse(ast, {

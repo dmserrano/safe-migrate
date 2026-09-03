@@ -14,6 +14,7 @@ import fg from "fast-glob";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
+import { moduleStem } from "../paths.js";
 import type { Context, ImportSummary, SafeMigrateConfig } from "../types.js";
 
 export async function assembleContext(
@@ -27,9 +28,9 @@ export async function assembleContext(
   const imports = extractImports(source);
 
   const testFiles = await fg(config.target.testGlob, { cwd: packageRoot, absolute: true });
-  const moduleStem = stem(modulePath);
+  const stem = moduleStem(modulePath);
 
-  const ownTestAbs = testFiles.find((f) => stem(f).replace(/\.(test|spec)$/, "") === moduleStem) ?? null;
+  const ownTestAbs = testFiles.find((f) => moduleStem(f).replace(/\.(test|spec)$/, "") === stem) ?? null;
 
   // The own test is excluded from context; a DIFFERENT sibling test (if any) is
   // included as a conventions exemplar, to teach the repo's real testing idioms
@@ -44,10 +45,6 @@ export async function assembleContext(
     conventions,
     ownTestPath: ownTestAbs ? path.relative(packageRoot, ownTestAbs) : null,
   };
-}
-
-function stem(filePath: string): string {
-  return path.basename(filePath).replace(/\.[jt]sx?$/, "");
 }
 
 function extractImports(source: string): ImportSummary[] {
