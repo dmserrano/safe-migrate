@@ -14,8 +14,8 @@
 
 ---
 
-JS apps fall behind on dependencies fast. Dependabot will tell you a package is six
-majors behind — it won't tell you whether upgrading is safe. Without tests that actually
+JS apps fall behind on dependencies fast. Dependabot will tell you a package is a couple
+major versions behind — it won't tell you whether upgrading is safe. Without tests that actually
 exercise current behavior, "is this safe to merge" becomes a manual audit every time, so
 the PR sits red and the debt compounds.
 
